@@ -7,31 +7,18 @@ import (
 	"github.com/igwtcode/go-env"
 )
 
-func Test1(t *testing.T) {
+func TestBasicValues(t *testing.T) {
 	type Config struct {
-		AppUser string    `env:""`
-		Mode    string    `env:"required"`
-		Hosts   []string  `env:"name=hostslist|TARGET_HOSTS,default=localhost|127.0.0.1"`
-		Limits  []float32 `env:"name=limits,default=1.2|2.1|3.3"`
-		IDs     []uint16  `env:"name=user_id_list"`
-		Port    uint      `env:"min=1024,max=65535"`
-		Timeout int       `env:"name=time_out,required,notrim"`
-		Debug   bool      `env:"name=DEBUG,default=false"`
+		AppUser string `env:""`
+		Mode    string `env:"required"`
+		Timeout int    `env:"name=time_out,required,notrim"`
 	}
 
 	os.Setenv("mode", "PROD")
-	os.Setenv("user_id_list", "23456|13332|45678|31234")
 	os.Setenv("AppUser", "john")
-	os.Setenv("PORT", "8080")
-	os.Setenv("DEBUG", "true")
-	os.Setenv("TARGET_HOSTS", "host1|host2|host3")
 	os.Setenv("time_out", "30")
 	defer os.Unsetenv("mode")
-	defer os.Unsetenv("user_id_list")
 	defer os.Unsetenv("AppUser")
-	defer os.Unsetenv("PORT")
-	defer os.Unsetenv("DEBUG")
-	defer os.Unsetenv("TARGET_HOSTS")
 	defer os.Unsetenv("time_out")
 
 	parser := env.NewParser()
@@ -47,14 +34,28 @@ func Test1(t *testing.T) {
 	if cfg.Mode != "PROD" {
 		t.Errorf("expected Mode to be 'PROD', got %v", cfg.Mode)
 	}
-	if cfg.Port != 8080 {
-		t.Errorf("expected Port to be '8080', got %v", cfg.Port)
-	}
 	if cfg.Timeout != 30 {
 		t.Errorf("expected Timeout to be '30', got %v", cfg.Timeout)
 	}
-	if cfg.Debug != true {
-		t.Errorf("expected Debug to be 'true', got %v", cfg.Debug)
+}
+
+func TestSliceValues(t *testing.T) {
+	type Config struct {
+		Hosts  []string  `env:"name=hostslist|TARGET_HOSTS,default=localhost|127.0.0.1"`
+		Limits []float32 `env:"name=limits,default=1.2|2.1|3.3"`
+		IDs    []uint16  `env:"name=user_id_list"`
+	}
+
+	os.Setenv("user_id_list", "23456|13332|45678|31234")
+	os.Setenv("TARGET_HOSTS", "host1|host2|host3")
+	defer os.Unsetenv("user_id_list")
+	defer os.Unsetenv("TARGET_HOSTS")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
 	}
 
 	expectedHosts := []string{"host1", "host2", "host3"}
@@ -85,6 +86,32 @@ func Test1(t *testing.T) {
 		if cfg.IDs[i] != id {
 			t.Errorf("expected IDs[%d] to be %v, got %v", i, id, cfg.IDs[i])
 		}
+	}
+}
+
+func TestNumericAndBooleanValues(t *testing.T) {
+	type Config struct {
+		Port  uint `env:"min=1024,max=65535"`
+		Debug bool `env:"name=DEBUG,default=false"`
+	}
+
+	os.Setenv("PORT", "8080")
+	os.Setenv("DEBUG", "true")
+	defer os.Unsetenv("PORT")
+	defer os.Unsetenv("DEBUG")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.Port != 8080 {
+		t.Errorf("expected Port to be '8080', got %v", cfg.Port)
+	}
+	if cfg.Debug != true {
+		t.Errorf("expected Debug to be 'true', got %v", cfg.Debug)
 	}
 }
 
