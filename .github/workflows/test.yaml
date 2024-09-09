@@ -23,4 +23,7 @@ jobs:
         run: go build .
 
       - name: Test
+        run: go test ./...
+
+      - name: Test Cover
         run: go test -cover ./...
