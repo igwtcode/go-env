@@ -116,30 +116,156 @@ func main() {
 
 ## Tag Options
 
-The `go-env` tags control how the environment variables are mapped to struct fields and validated. These are the supported options:
+The `go-env` package allows you to control how environment variables are mapped to struct fields using tags. These tags provide powerful options to set defaults, enforce validation, and customize the behavior of how environment variables are parsed.
 
-- `name`: Defines the environment variable(s) to use. Multiple names can be provided, separated by the slice separator. First it will lookup all provided names in this list, if not provided with any, uses the field name, then upper and lower case of it respectively for lookup.
-- `default`: Provides a default value if the environment variable is not set.
-- `required`: Ensures that the field has a value; returns an error if missing.
-- `lower`: Converts the value to lowercase.
-- `upper`: Converts the value to uppercase. (if both `lower` and `upper` are used, final value would be **uppercase**)
-- `notrim`: Disables trimming of leading/trailing whitespace. (used for the value as a whole and all its list items, in case of a slice)
-- `min`/`max`: Enforces numeric ranges for integer and float fields. (`min` and `max` included: `[min, max]`)
+Here are the available options:
 
-### Examples:
+- **`name`**: Specifies the environment variable(s) to use for the field. Multiple names can be provided, separated by the slice separator (default `|`). The order of lookup is:
+
+  1. All names listed in the `name` tag.
+  2. The struct field name.
+  3. The upper and lower case versions of the struct field name.
+
+  Example: `name=AWS_DEFAULT_REGION|AWS_REGION`
+
+- **`default`**: Defines a default value to use if the environment variable is not set.
+
+  Example: `default=8080`
+
+- **`required`**: Ensures the field must have a value. If no environment variable is set and no default is provided, an error is returned.
+
+  Example: `required`
+
+- **`lower`**: Converts the value to lowercase before setting the field.
+
+  Example: `lower`
+
+- **`upper`**: Converts the value to uppercase before setting the field. If both `lower` and `upper` are used, the final value will be **uppercase**.
+
+  Example: `upper`
+
+- **`notrim`**: Disables the default trimming of leading and trailing whitespace. Applies to both single values and list items in slices.
+
+  Example: `notrim`
+
+- **`min`/`max`**: Defines numeric range validation for integers or floats. If the environment variable value is outside the range, an error is returned.
+
+  Example: `min=10,max=100`
+
+- **`v_aws_region`**: Validates that the value is a valid AWS region name.
+
+  Example: `v_aws_region`
+
+- **`v_aws_account_id`**: Validates that the value is a valid 12-digit AWS account ID.
+
+  Example: `v_aws_account_id`
+
+- **`v_aws_role_arn`**: Validates that the value is a valid AWS Role ARN.
+
+  Example: `v_aws_role_arn`
+
+- **`v_aws_bucket_name`**: Validates that the value is a valid AWS S3 bucket name.
+
+  Example: `v_aws_bucket_name`
+
+### [Examples](./_examples/)
+
+Here is a comprehensive [example](./_examples/01/main.go) that demonstrates how to use the `go-env` package with options and features:
 
 ```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/igwtcode/go-env"
+)
+
 type Config struct {
-    Port    int     `env:"name=PORT,min=1024,max=65534,default=8080"`
-    Timeout int     `env:"name=TIMEOUT,required"`
-    Hosts   []string `env:"name=HOSTS,default=localhost|127.0.0.1"`
-    MyValue string   `env:"notrim,required,upper"`
+	// Example with no env tag, ignored by the parser
+	NoEnvTag string
+
+	// Example with trimming disabled and forced to uppercase
+	MyValue string `env:"notrim,required,upper"`
+
+	// AWS-specific validations
+	AwsRegion    string `env:"name=AWS_DEFAULT_REGION|AWS_REGION,v_aws_region,required"`
+	AccountID    string `env:"name=AWS_ACCOUNT_ID,v_aws_account_id,required"`
+	RoleArn      string `env:"name=AWS_ROLE_ARN,v_aws_role_arn"`
+	S3BucketName string `env:"name=AWS_BUCKET,v_aws_bucket_name"`
+
+	// Additional fields with more combinations of options
+	LogLevel string `env:"name=LOG_LEVEL,lower,default=info"`
+
+	// Slice of strings with a default value (localhost and 127.0.0.1)
+	Hosts []string `env:"default=localhost|127.0.0.1"`
+
+	// Retry count with min and max validation, and a default value
+	Retry uint `env:"name=RETRY_COUNT,min=0,max=10,default=3"`
+
+	// Basic integer with min and max validation, and a default value
+	Port int `env:"name=PORT,min=1024,max=65534,default=8080"`
+
+	// Required value, environment variable must be set
+	Timeout int `env:"required"`
+
+	// Private field with no env tag, ignored by the parser
+	privateField int
 }
+
+func main() {
+	envVars := map[string]string{
+		"DEMO_GO_ENV_MYVALUE":        "  MyValue  ",
+		"DEMO_GO_ENV_AWS_REGION":     "us-west-2",
+		"DEMO_GO_ENV_AWS_ACCOUNT_ID": "123456789012",
+		"DEMO_GO_ENV_AWS_ROLE_ARN":   "arn:aws:iam::123456789012:role/MyRole",
+		"DEMO_GO_ENV_AWS_BUCKET":     "my-s3-bucket",
+		"DEMO_GO_ENV_LOG_LEVEL":      "DEBUG",
+		"DEMO_GO_ENV_HOSTS":          "server1|server2|server3",
+		"DEMO_GO_ENV_PORT":           "9090",
+		"DEMO_GO_ENV_TIMEOUT":        "30",
+	}
+
+	setEnvVars(envVars)
+	defer unsetEnvVars(envVars)
+
+	var cfg Config
+
+	parser := env.NewParser().WithNamePrefix("DEMO_GO_ENV_")
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	fmt.Printf("Config: %+v\n", cfg)
+}
+
+// Helper function to set environment variables dynamically
+func setEnvVars(envVars map[string]string) {
+	for key, value := range envVars {
+		os.Setenv(key, value)
+	}
+}
+
+// Helper function to unset environment variables
+func unsetEnvVars(envVars map[string]string) {
+	for key := range envVars {
+		os.Unsetenv(key)
+	}
+}
+```
+
+### Example Output:
+
+```bash
+Config: {NoEnvTag: MyValue:  MYVALUE   AwsRegion:us-west-2 AccountID:123456789012 RoleArn:arn:aws:iam::123456789012:role/MyRole S3BucketName:my-s3-bucket LogLevel:debug Hosts:[server1 server2 server3] Retry:3 Port:9090 Timeout:30 privateField:0}
 ```
 
 ## Related Projects
 
-- [Netflix/go-env](https://github.com/Netflix/go-env): A similar Go package that reads environment variables into structs. While it offers very good functionality, `env` provides additional flexibility with configurable tag options, custom separators, and prefix support for environment variables.
+- [Netflix/go-env](https://github.com/Netflix/go-env): A similar Go package that reads environment variables into structs. While it offers very good functionality, `go-env` provides additional flexibility with configurable tag options, custom separators, and prefix support for environment variables.
 
 ## License
 
