@@ -1,4 +1,8 @@
-# `go-env` - A Simple yet Configurable Environment Variable Parser
+# `go-env`
+
+[![Test](https://github.com/igwtcode/go-env/actions/workflows/test.yaml/badge.svg)](https://github.com/igwtcode/go-env/actions/workflows/test.yaml)
+
+A Simple yet Configurable Environment Variable Parser
 
 The `go-env` package provides a simple, powerful, and flexible way to populate Go structs from environment variables. It is designed for developers who want a lightweight, dependency-free solution to read configuration from environment variables.
 
