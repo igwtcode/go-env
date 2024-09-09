@@ -2244,3 +2244,238 @@ func TestStructWithMultipleNestedStructs(t *testing.T) {
 		t.Errorf("expected Cache.Port to be 6379, got %v", cfg.Cache.Port)
 	}
 }
+
+func TestValidAwsRegion(t *testing.T) {
+	type Config struct {
+		Region string `env:"name=AWS_REGION,v_aws_region"`
+	}
+
+	os.Setenv("AWS_REGION", "us-east-1")
+	defer os.Unsetenv("AWS_REGION")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.Region != "us-east-1" {
+		t.Errorf("expected Region to be 'us-east-1', got %v", cfg.Region)
+	}
+}
+
+func TestInvalidAwsRegion(t *testing.T) {
+	type Config struct {
+		Region string `env:"name=AWS_REGION,v_aws_region"`
+	}
+
+	os.Setenv("AWS_REGION", "invalid-region")
+	defer os.Unsetenv("AWS_REGION")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err == nil {
+		t.Fatalf("expected an error for invalid AWS region, got none")
+	}
+}
+
+func TestMissingAwsRegionWithDefault(t *testing.T) {
+	type Config struct {
+		Region string `env:"name=AWS_REGION,v_aws_region,default=us-west-2"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.Region != "us-west-2" {
+		t.Errorf("expected Region to be 'us-west-2', got %v", cfg.Region)
+	}
+}
+
+func TestValidAwsAccountID(t *testing.T) {
+	type Config struct {
+		AccountID string `env:"name=AWS_ACCOUNT_ID,v_aws_account_id"`
+	}
+
+	os.Setenv("AWS_ACCOUNT_ID", "123456789012")
+	defer os.Unsetenv("AWS_ACCOUNT_ID")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.AccountID != "123456789012" {
+		t.Errorf("expected AccountID to be '123456789012', got %v", cfg.AccountID)
+	}
+}
+
+func TestInvalidAwsAccountID(t *testing.T) {
+	type Config struct {
+		AccountID string `env:"name=AWS_ACCOUNT_ID,v_aws_account_id"`
+	}
+
+	os.Setenv("AWS_ACCOUNT_ID", "invalid-account-id")
+	defer os.Unsetenv("AWS_ACCOUNT_ID")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err == nil {
+		t.Fatalf("expected an error for invalid AWS account ID, got none")
+	}
+}
+
+func TestMissingAwsAccountIDWithDefault(t *testing.T) {
+	type Config struct {
+		AccountID string `env:"name=AWS_ACCOUNT_ID,v_aws_account_id,default=123456789012"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.AccountID != "123456789012" {
+		t.Errorf("expected AccountID to be '123456789012', got %v", cfg.AccountID)
+	}
+}
+
+func TestValidAwsRoleArn(t *testing.T) {
+	type Config struct {
+		RoleArn string `env:"name=AWS_ROLE_ARN,v_aws_role_arn"`
+	}
+
+	os.Setenv("AWS_ROLE_ARN", "arn:aws:iam::123456789012:role/MyRole")
+	defer os.Unsetenv("AWS_ROLE_ARN")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.RoleArn != "arn:aws:iam::123456789012:role/MyRole" {
+		t.Errorf("expected RoleArn to be 'arn:aws:iam::123456789012:role/MyRole', got %v", cfg.RoleArn)
+	}
+}
+
+func TestInvalidAwsRoleArn(t *testing.T) {
+	type Config struct {
+		RoleArn string `env:"name=AWS_ROLE_ARN,v_aws_role_arn"`
+	}
+
+	os.Setenv("AWS_ROLE_ARN", "invalid-arn")
+	defer os.Unsetenv("AWS_ROLE_ARN")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err == nil {
+		t.Fatalf("expected an error for invalid AWS role ARN, got none")
+	}
+}
+
+func TestMissingAwsRoleArnWithDefault(t *testing.T) {
+	type Config struct {
+		RoleArn string `env:"name=AWS_ROLE_ARN,v_aws_role_arn,default=arn:aws:iam::123456789012:role/DefaultRole"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.RoleArn != "arn:aws:iam::123456789012:role/DefaultRole" {
+		t.Errorf("expected RoleArn to be 'arn:aws:iam::123456789012:role/DefaultRole', got %v", cfg.RoleArn)
+	}
+}
+
+func TestValidAwsBucketName(t *testing.T) {
+	type Config struct {
+		BucketName string `env:"name=AWS_BUCKET_NAME,v_aws_bucket_name"`
+	}
+
+	os.Setenv("AWS_BUCKET_NAME", "my-valid-bucket")
+	defer os.Unsetenv("AWS_BUCKET_NAME")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.BucketName != "my-valid-bucket" {
+		t.Errorf("expected BucketName to be 'my-valid-bucket', got %v", cfg.BucketName)
+	}
+}
+
+func TestInvalidAwsBucketName(t *testing.T) {
+	type Config struct {
+		BucketName string `env:"name=AWS_BUCKET_NAME,v_aws_bucket_name"`
+	}
+
+	os.Setenv("AWS_BUCKET_NAME", "Invalid_Bucket_Name")
+	defer os.Unsetenv("AWS_BUCKET_NAME")
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err == nil {
+		t.Fatalf("expected an error for invalid AWS bucket name, got none")
+	}
+}
+
+func TestMissingAwsBucketNameWithDefault(t *testing.T) {
+	type Config struct {
+		BucketName string `env:"name=AWS_BUCKET_NAME,v_aws_bucket_name,default=my-default-bucket"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if cfg.BucketName != "my-default-bucket" {
+		t.Errorf("expected BucketName to be 'my-default-bucket', got %v", cfg.BucketName)
+	}
+}
+
+func TestMultipleAwsValidators(t *testing.T) {
+	type Config struct {
+		BucketName string `env:"v_aws_bucket_name,v_aws_region,default=my-default-bucket"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err == nil {
+		t.Fatalf("expected error for multiple AWS validators, got none")
+	}
+}

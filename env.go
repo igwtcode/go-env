@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/igwtcode/go-env/internal/topt"
 )
 
 const (
@@ -104,27 +106,27 @@ func (p *Parser) Unmarshal(envStruct interface{}) error {
 		envVal := getEnvValue(envNames)
 
 		// Apply trim by default, can be disabled with 'notrim' option
-		if _, notrim := tagOptions["notrim"]; !notrim {
+		if _, notrim := tagOptions[topt.NOTRIM]; !notrim {
 			envVal = strings.TrimSpace(envVal)
 		}
 
 		// Handle default value
-		if envVal == "" && tagOptions["default"] != "" {
-			envVal = tagOptions["default"]
+		if envVal == "" && tagOptions[topt.DEFAULT] != "" {
+			envVal = tagOptions[topt.DEFAULT]
 		}
 
 		// Handle required fields
-		if _, required := tagOptions["required"]; required && envVal == "" {
+		if _, required := tagOptions[topt.REQUIRED]; required && envVal == "" {
 			return fmt.Errorf("environment variable %s is required but not set", strings.Join(envNames, p.SliceValueSeparator))
 		}
 
 		// Handle lowercase
-		if _, lower := tagOptions["lower"]; lower {
+		if _, lower := tagOptions[topt.LOWER]; lower {
 			envVal = strings.ToLower(envVal)
 		}
 
 		// Handle uppercase
-		if _, upper := tagOptions["upper"]; upper {
+		if _, upper := tagOptions[topt.UPPER]; upper {
 			envVal = strings.ToUpper(envVal)
 		}
 
@@ -136,12 +138,41 @@ func (p *Parser) Unmarshal(envStruct interface{}) error {
 			continue
 		}
 
+		// Check if the field has an AWS-specific validation option and apply the validation
+		if err := checkForAwsValidation(field.Name, envVal, tagOptions); err != nil {
+			return err
+		}
+
 		// Set value to the appropriate field
 		if err := setValue(fieldValue, envVal, tagOptions); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+// awsValidationMap finds and applies the validation function for AWS-specific environment variables tag options.
+func checkForAwsValidation(fieldName string, envVal string, tagOptions map[string]string) error {
+	// Count how many v_aws_... validation options are provided
+	vc := 0
+	var vfn func(string) error
+
+	// Check for v_aws_xxx options and validate exclusivity
+	for tag, fn := range awsValidationMap {
+		if _, ok := tagOptions[tag]; ok {
+			vc++
+			if vc > 1 {
+				return fmt.Errorf("multiple v_aws validation options provided for field '%s': only one is allowed", fieldName)
+			}
+			vfn = fn
+		}
+	}
+
+	// Apply the validation if v_aws validation option is found
+	if vfn != nil {
+		return vfn(envVal)
+	}
 	return nil
 }
 
@@ -159,7 +190,7 @@ func getEnvNames(fieldName string, tagOptions map[string]string, p *Parser) []st
 	}
 
 	// Check if `name` tag is provided, and split it into multiple names using the slice value separator.
-	if name, ok := tagOptions["name"]; ok && name != "" {
+	if name, ok := tagOptions[topt.NAME]; ok && name != "" {
 		ap(strings.Split(name, p.SliceValueSeparator))
 	}
 
@@ -241,7 +272,7 @@ func handleSliceWithSeparator(field reflect.Value, envVal string, tagOptions map
 		field.Set(reflect.MakeSlice(field.Type(), 0, 0))
 		return nil
 	}
-	_, notrim := tagOptions["notrim"]
+	_, notrim := tagOptions[topt.NOTRIM]
 
 	// Split the environment variable by the separator
 	values := strings.Split(envVal, separator)
@@ -280,7 +311,7 @@ func handleSliceWithSeparator(field reflect.Value, envVal string, tagOptions map
 
 // checkMinMax validates if the value is within the range specified by the "min" and "max" tags.
 func checkMinMax(val interface{}, tagOptions map[string]string) error {
-	if minStr, ok := tagOptions["min"]; ok {
+	if minStr, ok := tagOptions[topt.MIN]; ok {
 		min, err := strconv.ParseFloat(minStr, 64)
 		if err != nil {
 			return fmt.Errorf("invalid min value: %s", minStr)
@@ -290,7 +321,7 @@ func checkMinMax(val interface{}, tagOptions map[string]string) error {
 		}
 	}
 
-	if maxStr, ok := tagOptions["max"]; ok {
+	if maxStr, ok := tagOptions[topt.MAX]; ok {
 		max, err := strconv.ParseFloat(maxStr, 64)
 		if err != nil {
 			return fmt.Errorf("invalid max value: %s", maxStr)
