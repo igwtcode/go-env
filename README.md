@@ -137,6 +137,10 @@ type Config struct {
 }
 ```
 
+## Related Projects
+
+- [Netflix/go-env](https://github.com/Netflix/go-env): A similar Go package that reads environment variables into structs. While it offers very good functionality, `env` provides additional flexibility with configurable tag options, custom separators, and prefix support for environment variables.
+
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
