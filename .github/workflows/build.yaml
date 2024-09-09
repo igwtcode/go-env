@@ -1,4 +1,4 @@
-name: Test
+name: Go
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 9
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,10 +20,7 @@ jobs:
           cache: false
 
       - name: Build
-        run: go build .
+        run: go build -v ./...
 
       - name: Test
-        run: go test ./...
-
-      - name: Test Cover
-        run: go test -cover ./...
+        run: go test -cover -v ./...

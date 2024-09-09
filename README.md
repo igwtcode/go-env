@@ -1,6 +1,6 @@
 # `go-env`
 
-[![Test](https://github.com/igwtcode/go-env/actions/workflows/test.yaml/badge.svg)](https://github.com/igwtcode/go-env/actions/workflows/test.yaml)
+[![Build Status](https://github.com/igwtcode/go-env/actions/workflows/build.yaml/badge.svg)](https://github.com/igwtcode/go-env/actions/workflows/build.yaml) [![Go Reference](https://pkg.go.dev/badge/github.com/igwtcode/go-env.svg)](https://pkg.go.dev/github.com/igwtcode/go-env)
 
 A Simple yet Configurable Environment Variable Parser
 
