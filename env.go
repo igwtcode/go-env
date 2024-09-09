@@ -154,6 +154,11 @@ func (p *Parser) Unmarshal(envStruct interface{}) error {
 
 // awsValidationMap finds and applies the validation function for AWS-specific environment variables tag options.
 func checkForAwsValidation(fieldName string, envVal string, tagOptions map[string]string) error {
+	// if the field is not required and the env value is empty, return
+	if _, ok := tagOptions[topt.REQUIRED]; !ok && envVal == "" {
+		return nil
+	}
+
 	// Count how many v_aws_... validation options are provided
 	vc := 0
 	var vfn func(string) error

@@ -2479,3 +2479,33 @@ func TestMultipleAwsValidators(t *testing.T) {
 		t.Fatalf("expected error for multiple AWS validators, got none")
 	}
 }
+
+func TestRequiredFieldWithAwsValidator(t *testing.T) {
+	type Config struct {
+		BucketName string `env:"required,v_aws_bucket_name"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err == nil {
+		t.Fatalf("expected error for empty required field with AWS validators, got none")
+	}
+}
+
+func TestOptionalFieldWithAwsValidator(t *testing.T) {
+	type Config struct {
+		BucketName string `env:"v_aws_bucket_name"`
+	}
+
+	os.Clearenv()
+
+	parser := env.NewParser()
+	var cfg Config
+	err := parser.Unmarshal(&cfg)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}

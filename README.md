@@ -168,6 +168,9 @@ Here are the available options:
 
   Example: `v_aws_bucket_name`
 
+> [!NOTE]
+> AWS validators have no effect, when the field is not required and the env value is empty.
+
 ### [Examples](./_examples/)
 
 Here is a comprehensive [example](./_examples/01/main.go) that demonstrates how to use the `go-env` package with options and features:
