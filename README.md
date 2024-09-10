@@ -270,7 +270,10 @@ Config: {NoEnvTag: MyValue:  MYVALUE   AwsRegion:us-west-2 AccountID:12345678901
 
 ## Related Projects
 
-- [Netflix/go-env](https://github.com/Netflix/go-env): A similar Go package that reads environment variables into structs. While it offers very good functionality, `go-env` provides additional flexibility with configurable tag options, custom separators, and prefix support for environment variables.
+- [caarlos0/env](https://github.com/caarlos0/env)
+- [Netflix/go-env](https://github.com/Netflix/go-env)
+- [qiangxue/go-env](https://github.com/qiangxue/go-env)
+- [deanishe/go-env](https://github.com/deanishe/go-env)
 
 ## License
 
